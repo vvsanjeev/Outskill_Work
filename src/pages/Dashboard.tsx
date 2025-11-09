@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckSquare, LogOut, Plus, Trash2, Sparkles, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import Profile from '../components/Profile';
 
 type Task = {
   id: string;
@@ -285,168 +286,176 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="mb-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Your Tasks</h2>
-          <p className="text-gray-600">{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</p>
-        </div>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
-        )}
-
-        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">Add New Task</h3>
-          <form onSubmit={handleAddTask} className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                placeholder="Enter a new task"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-200 outline-none"
-              />
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-200 outline-none"
-              >
-                <option value="low">Low Priority</option>
-                <option value="medium">Medium Priority</option>
-                <option value="high">High Priority</option>
-              </select>
-              <button
-                type="submit"
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 active:scale-[0.98] transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                <Plus className="w-5 h-5" />
-                Add
-              </button>
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex-1">
+            <div className="mb-8">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Your Tasks</h2>
+              <p className="text-gray-600">{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</p>
             </div>
-          </form>
-        </div>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">Loading tasks...</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {(['pending', 'in-progress', 'done'] as const).map((status) => (
-              <div key={status} className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 capitalize">
-                  {status === 'in-progress' ? 'In Progress' : status}
-                  <span className="ml-2 text-sm font-normal text-gray-500">
-                    ({groupedTasks[status].length})
-                  </span>
-                </h3>
-                <div className="space-y-3">
-                  {groupedTasks[status].map((task) => (
-                    <div
-                      key={task.id}
-                      className="p-4 rounded-xl border border-gray-200 hover:border-blue-300 transition-all duration-200 space-y-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="text-gray-900 flex-1 font-medium">{task.title}</p>
-                        <button
-                          onClick={() => deleteTask(task.id)}
-                          className="text-gray-400 hover:text-red-600 transition-colors"
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-8">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Add New Task</h3>
+              <form onSubmit={handleAddTask} className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    value={newTask}
+                    onChange={(e) => setNewTask(e.target.value)}
+                    placeholder="Enter a new task"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-200 outline-none"
+                  />
+                  <select
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
+                    className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-200 outline-none"
+                  >
+                    <option value="low">Low Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="high">High Priority</option>
+                  </select>
+                  <button
+                    type="submit"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 active:scale-[0.98] transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Add
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-gray-600">Loading tasks...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {(['pending', 'in-progress', 'done'] as const).map((status) => (
+                  <div key={status} className="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 capitalize">
+                      {status === 'in-progress' ? 'In Progress' : status}
+                      <span className="ml-2 text-sm font-normal text-gray-500">
+                        ({groupedTasks[status].length})
+                      </span>
+                    </h3>
+                    <div className="space-y-3">
+                      {groupedTasks[status].map((task) => (
+                        <div
+                          key={task.id}
+                          className="p-4 rounded-xl border border-gray-200 hover:border-blue-300 transition-all duration-200 space-y-3"
                         >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-gray-900 flex-1 font-medium">{task.title}</p>
+                            <button
+                              onClick={() => deleteTask(task.id)}
+                              className="text-gray-400 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${getPriorityColor(task.priority)}`}>
-                          {task.priority}
-                        </span>
-                      </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${getPriorityColor(task.priority)}`}>
+                              {task.priority}
+                            </span>
+                          </div>
 
-                      <select
-                        value={task.status}
-                        onChange={(e) => updateTaskStatus(task.id, e.target.value as any)}
-                        className={`w-full px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${getStatusColor(task.status)}`}
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="done">Done</option>
-                      </select>
-
-                      <button
-                        onClick={() => generateSubtasks(task.id, task.title)}
-                        disabled={generatingAI[task.id]}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        {generatingAI[task.id] ? 'Generating...' : 'Generate Subtasks with AI'}
-                      </button>
-
-                      {aiSuggestions[task.id] && aiSuggestions[task.id].length > 0 && (
-                        <div className="mt-3 space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                          <p className="text-xs font-semibold text-blue-900 mb-2">AI Suggestions:</p>
-                          {aiSuggestions[task.id].map((suggestion, idx) => (
-                            <div key={idx} className="flex items-start gap-2 text-sm">
-                              <span className="text-blue-700 flex-1">{suggestion}</span>
-                              <button
-                                onClick={() => saveSubtask(task.id, suggestion)}
-                                className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
-                              >
-                                Save
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {subtasks[task.id] && subtasks[task.id].length > 0 && (
-                        <div className="mt-3">
-                          <button
-                            onClick={() => setExpandedTasks(prev => ({ ...prev, [task.id]: !prev[task.id] }))}
-                            className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2"
+                          <select
+                            value={task.status}
+                            onChange={(e) => updateTaskStatus(task.id, e.target.value as any)}
+                            className={`w-full px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${getStatusColor(task.status)}`}
                           >
-                            {expandedTasks[task.id] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                            Subtasks ({subtasks[task.id].length})
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="done">Done</option>
+                          </select>
+
+                          <button
+                            onClick={() => generateSubtasks(task.id, task.title)}
+                            disabled={generatingAI[task.id]}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            {generatingAI[task.id] ? 'Generating...' : 'Generate Subtasks with AI'}
                           </button>
-                          {expandedTasks[task.id] && (
-                            <div className="space-y-2 pl-2 border-l-2 border-gray-200">
-                              {subtasks[task.id].map((subtask) => (
-                                <div key={subtask.id} className="flex items-center gap-2 text-sm">
+
+                          {aiSuggestions[task.id] && aiSuggestions[task.id].length > 0 && (
+                            <div className="mt-3 space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                              <p className="text-xs font-semibold text-blue-900 mb-2">AI Suggestions:</p>
+                              {aiSuggestions[task.id].map((suggestion, idx) => (
+                                <div key={idx} className="flex items-start gap-2 text-sm">
+                                  <span className="text-blue-700 flex-1">{suggestion}</span>
                                   <button
-                                    onClick={() => toggleSubtask(subtask.id, task.id, subtask.completed)}
-                                    className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
-                                      subtask.completed
-                                        ? 'bg-green-600 border-green-600'
-                                        : 'border-gray-300 hover:border-green-600'
-                                    }`}
+                                    onClick={() => saveSubtask(task.id, suggestion)}
+                                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
                                   >
-                                    {subtask.completed && <Check className="w-3 h-3 text-white" />}
-                                  </button>
-                                  <span className={`flex-1 ${subtask.completed ? 'line-through text-gray-500' : 'text-gray-700'}`}>
-                                    {subtask.title}
-                                  </span>
-                                  <button
-                                    onClick={() => deleteSubtask(subtask.id, task.id)}
-                                    className="text-gray-400 hover:text-red-600 transition-colors"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
+                                    Save
                                   </button>
                                 </div>
                               ))}
                             </div>
                           )}
+
+                          {subtasks[task.id] && subtasks[task.id].length > 0 && (
+                            <div className="mt-3">
+                              <button
+                                onClick={() => setExpandedTasks(prev => ({ ...prev, [task.id]: !prev[task.id] }))}
+                                className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2"
+                              >
+                                {expandedTasks[task.id] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                Subtasks ({subtasks[task.id].length})
+                              </button>
+                              {expandedTasks[task.id] && (
+                                <div className="space-y-2 pl-2 border-l-2 border-gray-200">
+                                  {subtasks[task.id].map((subtask) => (
+                                    <div key={subtask.id} className="flex items-center gap-2 text-sm">
+                                      <button
+                                        onClick={() => toggleSubtask(subtask.id, task.id, subtask.completed)}
+                                        className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                                          subtask.completed
+                                            ? 'bg-green-600 border-green-600'
+                                            : 'border-gray-300 hover:border-green-600'
+                                        }`}
+                                      >
+                                        {subtask.completed && <Check className="w-3 h-3 text-white" />}
+                                      </button>
+                                      <span className={`flex-1 ${subtask.completed ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                                        {subtask.title}
+                                      </span>
+                                      <button
+                                        onClick={() => deleteSubtask(subtask.id, task.id)}
+                                        className="text-gray-400 hover:text-red-600 transition-colors"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
+                      ))}
+                      {groupedTasks[status].length === 0 && (
+                        <p className="text-center py-8 text-gray-400 text-sm">No tasks</p>
                       )}
                     </div>
-                  ))}
-                  {groupedTasks[status].length === 0 && (
-                    <p className="text-center py-8 text-gray-400 text-sm">No tasks</p>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
+
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <Profile />
+          </div>
+        </div>
       </main>
     </div>
   );
