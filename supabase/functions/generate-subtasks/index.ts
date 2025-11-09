@@ -45,26 +45,66 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const systemPrompt = `You are a helpful assistant that breaks down big tasks into simple, clear
+subtasks. Given a main task title, return a list of 5 to 7 clear, short subtasks
+needed to complete it. The subtasks should be practical and written in plain
+language. Return them as a plain JSON array. Do not include any extra text or
+explanations.
+
+Main task: "Plan a wedding"
+Example output:
+[
+"Book wedding venue"
+"Hire photographer",
+"Send invitations",
+"Arrange catering"
+"Plan wedding ceremony",
+"Choose wedding dress",
+"Plan honeymoon"
+]
+Now generate subtasks for this task:
+"{{PARENT_TASK_TITLE}}"`;
+
+    const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${openaiApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [
+        model: "gpt-4.1-mini",
+        input: [
           {
             role: "system",
-            content: "You are a helpful assistant that breaks down tasks into smaller, actionable subtasks. Generate 3-5 specific, clear subtasks. Return only the subtasks as a JSON array of strings, nothing else."
+            content: [
+              {
+                type: "input_text",
+                text: systemPrompt.replace("{{PARENT_TASK_TITLE}}", taskTitle)
+              }
+            ]
           },
           {
             role: "user",
-            content: `Break down this task into subtasks: ${taskTitle}`
+            content: [
+              {
+                type: "input_text",
+                text: taskTitle
+              }
+            ]
           }
         ],
-        temperature: 0.7,
-        max_tokens: 300,
+        text: {
+          format: {
+            type: "text"
+          }
+        },
+        reasoning: {},
+        tools: [],
+        temperature: 1,
+        max_output_tokens: 2048,
+        top_p: 1,
+        store: true,
+        include: ["web_search_call.action.sources"]
       }),
     });
 
@@ -74,8 +114,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
-    
+    const content = data.output[0].content[0].text;
+
     let subtasks: string[];
     try {
       subtasks = JSON.parse(content);
