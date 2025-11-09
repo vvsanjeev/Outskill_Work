@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckSquare, LogOut, Plus, Trash2, Sparkles, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckSquare, LogOut, Plus, Trash2, Sparkles, Check, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import Profile from '../components/Profile';
 
@@ -10,6 +10,10 @@ type Task = {
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in-progress' | 'done';
   created_at: string;
+};
+
+type SearchResult = Task & {
+  similarity: number;
 };
 
 type Subtask = {
@@ -30,6 +34,10 @@ export default function Dashboard() {
   const [generatingAI, setGeneratingAI] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
 
   useEffect(() => {
     checkUser();
@@ -231,6 +239,47 @@ export default function Dashboard() {
     }
   };
 
+  const handleSmartSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setSearching(true);
+    setSearchError('');
+    setSearchResults([]);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/smart-search`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to search tasks');
+      }
+
+      const { results } = await response.json();
+      setSearchResults(results);
+
+      if (results.length === 0) {
+        setSearchError('No similar tasks found with similarity above 0.8');
+      }
+    } catch (err: any) {
+      setSearchError(err.message || 'Failed to search tasks');
+    } finally {
+      setSearching(false);
+    }
+  };
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
@@ -291,6 +340,62 @@ export default function Dashboard() {
             <div className="mb-8">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Your Tasks</h2>
               <p className="text-gray-600">{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Smart Search</h3>
+              <form onSubmit={handleSmartSearch} className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search for similar tasks..."
+                    className="flex-1 px-4 py-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-white"
+                  />
+                  <button
+                    type="submit"
+                    disabled={searching}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 active:scale-[0.98] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Search className="w-5 h-5" />
+                    {searching ? 'Searching...' : 'Search'}
+                  </button>
+                </div>
+              </form>
+
+              {searchError && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-700">{searchError}</p>
+                </div>
+              )}
+
+              {searchResults.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  <p className="text-sm font-semibold text-gray-700">Similar Tasks Found:</p>
+                  {searchResults.map((result) => (
+                    <div
+                      key={result.id}
+                      className="bg-white p-4 rounded-xl border border-blue-200 hover:border-blue-400 transition-all duration-200"
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <p className="text-gray-900 font-medium flex-1">{result.title}</p>
+                        <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                          {(result.similarity * 100).toFixed(0)}% match
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${getPriorityColor(result.priority)}`}>
+                          {result.priority}
+                        </span>
+                        <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${getStatusColor(result.status)}`}>
+                          {result.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {error && (
